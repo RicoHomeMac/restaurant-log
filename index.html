@@ -1,82 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Restaurant Log</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root {
-  --bg: #f2f2f7;
-  --card: #ffffff;
-  --text: #1c1c1e;
-  --accent: #ff6b4a;
-  --muted: #8e8e93;
+:root{
+ --bg:#f5f2ee;
+ --card:#ffffff;
+ --text:#1d1d1f;
+ --accent:#b08968;
+ --muted:#6e6e73;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000000;
-    --card: #1c1c1e;
-    --text: #ffffff;
-    --accent: #ff7b5c;
-    --muted: #8e8e93;
-  }
+@media(prefers-color-scheme:dark){
+ :root{
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#ffffff;
+  --accent:#d4a373;
+  --muted:#a1a1a6;
+ }
 }
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, system-ui;
-  background: var(--bg);
-  color: var(--text);
-  padding: 20px;
+body{
+ margin:0;
+ font-family:-apple-system, BlinkMacSystemFont, system-ui;
+ background:var(--bg);
+ color:var(--text);
+ padding:20px;
 }
-
-h1 {
-  text-align: center;
-  font-weight: 700;
+h1{
+ text-align:center;
+ font-weight:600;
 }
-
-.card {
-  background: var(--card);
-  padding: 20px;
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+.card{
+ background:var(--card);
+ padding:20px;
+ border-radius:20px;
+ box-shadow:0 8px 24px rgba(0,0,0,0.08);
+ margin-bottom:20px;
 }
-
-input, textarea, select {
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  margin-top: 8px;
-  margin-bottom: 16px;
-  font-size: 16px;
-  background: #f2f2f7;
+input,textarea,select{
+ width:100%;
+ padding:14px;
+ margin-top:8px;
+ margin-bottom:16px;
+ border-radius:14px;
+ border:1px solid #ddd;
+ font-size:16px;
 }
-
-button {
-  width: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  border: none;
-  font-size: 17px;
-  font-weight: 600;
-  background: var(--accent);
-  color: white;
+button{
+ width:100%;
+ padding:16px;
+ border:none;
+ border-radius:16px;
+ font-weight:600;
+ font-size:16px;
+ background:var(--accent);
+ color:white;
 }
-
-.star {
-  font-size: 28px;
-  cursor: pointer;
+.star{
+ font-size:28px;
+ cursor:pointer;
 }
-
-.photo-preview {
-  width: 100%;
-  border-radius: 14px;
-  margin-bottom: 10px;
+.menu-category{
+ margin-top:20px;
+ padding-top:10px;
+ border-top:1px solid #eee;
+}
+.menu-item{
+ margin-bottom:10px;
+ padding:10px;
+ background:#f2f2f7;
+ border-radius:12px;
 }
 </style>
 </head>
@@ -87,101 +85,128 @@ button {
 <div class="card">
 
 <label>Date & Time</label>
-<input type="datetime-local" id="visit_time" />
+<input type="datetime-local" id="visit_time">
 
 <label>Restaurant Name</label>
-<input type="text" id="restaurant_name" />
+<input type="text" id="restaurant_name">
 
-<label>Location</label>
-<input type="text" id="address_text" />
+<label>Address</label>
+<input type="text" id="address_text">
 
 <label>Website</label>
-<input type="text" id="website_url" />
+<input type="text" id="website_url">
 
-<label>Specials / Happy Hour</label>
+<label>Specials</label>
 <textarea id="specials"></textarea>
 
-<label>How many people?</label>
+<label>Guests</label>
 <select id="guest_count">
 <option>1</option><option>2</option><option>3</option>
-<option>4</option><option>5</option><option>6+</option>
+<option>4</option><option>5</option><option>6</option>
+<option>7</option><option>8</option><option>9</option>
+<option>10</option>
 </select>
 
 <label>Rating</label>
-<div id="stars">
-<span class="star">☆</span>
-<span class="star">☆</span>
-<span class="star">☆</span>
-<span class="star">☆</span>
-<span class="star">☆</span>
-</div>
+<div id="stars"></div>
 
-<label>Upload Menu Photo</label>
-<input type="file" id="photo" accept="image/*" capture="environment" />
-<img id="preview" class="photo-preview" />
+<div id="menuSection"></div>
 
 <button onclick="saveVisit()">Save Visit</button>
 
 </div>
 
 <script>
-// 🔴 REPLACE THESE TWO VALUES
 const SUPABASE_URL = "https://yvgtxvipbbxbbfezpcfe.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_aAU6721_Vv_s46eLjiGJlQ_4G5GKrQZ";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let rating = 0;
-document.querySelectorAll('.star').forEach((star, index) => {
-  star.addEventListener('click', () => {
-    rating = index + 1;
-    document.querySelectorAll('.star').forEach((s,i)=>{
-      s.textContent = i < rating ? "⭐" : "☆";
-    });
+const starContainer = document.getElementById("stars");
+for(let i=1;i<=5;i++){
+ let s=document.createElement("span");
+ s.innerHTML="☆";
+ s.className="star";
+ s.onclick=()=>{
+  rating=i;
+  document.querySelectorAll(".star").forEach((el,idx)=>{
+   el.innerHTML=idx<i?"⭐":"☆";
   });
+ };
+ starContainer.appendChild(s);
+}
+
+document.getElementById("visit_time").value =
+ new Date().toISOString().slice(0,16);
+
+const categories = [
+ "Appetizers","Soup / Salad","Side Orders",
+ "Lunch","Dinner","Dessert","Beverages"
+];
+
+const menuSection = document.getElementById("menuSection");
+
+categories.forEach(cat=>{
+ let wrapper=document.createElement("div");
+ wrapper.className="menu-category";
+ wrapper.innerHTML=`<strong>${cat}</strong>
+ <button type="button" onclick="addItem('${cat}')">+ Add Item</button>
+ <div id="items-${cat}"></div>`;
+ menuSection.appendChild(wrapper);
 });
 
-document.getElementById('photo').addEventListener('change', function(e){
-  const reader = new FileReader();
-  reader.onload = function(){
-    document.getElementById('preview').src = reader.result;
+function addItem(category){
+ const container=document.getElementById("items-"+category);
+ const div=document.createElement("div");
+ div.className="menu-item";
+ div.innerHTML=`
+  <input placeholder="Item name" class="item-name">
+  <input placeholder="Price (optional)" class="item-price">
+  <input placeholder="Notes" class="item-notes">
+ `;
+ container.appendChild(div);
+}
+
+async function saveVisit(){
+
+ const { data:visit, error:visitError } =
+ await supabase.from("restaurant_visits")
+ .insert([{
+  visit_time:document.getElementById("visit_time").value,
+  restaurant_name:document.getElementById("restaurant_name").value,
+  address_text:document.getElementById("address_text").value,
+  website_url:document.getElementById("website_url").value,
+  specials:document.getElementById("specials").value,
+  guest_count:document.getElementById("guest_count").value,
+  rating:rating
+ }]).select();
+
+ if(visitError){
+  alert("Visit save failed");
+  return;
+ }
+
+ const visitId = visit[0].id;
+
+ for(const cat of categories){
+  const container=document.getElementById("items-"+cat);
+  const items=container.querySelectorAll(".menu-item");
+  for(const item of items){
+   const name=item.querySelector(".item-name").value;
+   if(!name) continue;
+   await supabase.from("visit_menu_items").insert([{
+    visit_id:visitId,
+    category:cat,
+    item_name:name,
+    price:item.querySelector(".item-price").value,
+    notes:item.querySelector(".item-notes").value
+   }]);
   }
-  reader.readAsDataURL(e.target.files[0]);
-});
+ }
 
-async function saveVisit() {
-
-  const file = document.getElementById("photo").files[0];
-  let photo_url = null;
-
-  if (file) {
-    const fileName = Date.now() + "-" + file.name;
-    const { data, error } = await supabase.storage
-      .from('restaurant-photos')
-      .upload(fileName, file);
-
-    if (!error) {
-      photo_url = SUPABASE_URL + "/storage/v1/object/public/restaurant-photos/" + fileName;
-    }
-  }
-
-  const { error } = await supabase.from('restaurant_visits').insert([{
-    visit_time: document.getElementById("visit_time").value,
-    restaurant_name: document.getElementById("restaurant_name").value,
-    address_text: document.getElementById("address_text").value,
-    website_url: document.getElementById("website_url").value,
-    specials: document.getElementById("specials").value,
-    guest_count: document.getElementById("guest_count").value,
-    rating: rating,
-    photo_url: photo_url
-  }]);
-
-  if (!error) {
-    alert("Saved!");
-    document.querySelector("form")?.reset();
-  } else {
-    alert("Error saving visit");
-  }
+ alert("Saved successfully");
+ location.reload();
 }
 </script>
 
